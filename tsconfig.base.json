@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "baseUrl": ".",
+    "paths": {
+      "@ftechnology/shared/*": ["libs/shared/src/*"],
+      "@ftechnology/shared": ["libs/shared/src/index.ts"],
+      "@ftechnology/ui/*": ["libs/ui/src/*"],
+      "@ftechnology/ui": ["libs/ui/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "tmp"]
+}

@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Testing
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Nx
+.nx/
+tmp/
+
+# Uploads
+apps/backend/uploads/*
+!apps/backend/uploads/.gitkeep
+
+# Misc
+*.tgz
+.cache/
+
+# Database credentials
+.pgpass
+*.pgpass
+
+# Test files
+test-*.js
+
+# Task specifications (internal)
+roadmap.md
+
+# Docker data
+postgres-data/
+
+# Claude Code settings
+.claude/

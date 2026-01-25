@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "allowJs": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "types": ["vite/client", "node", "jest", "@testing-library/jest-dom"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@ftechnology/shared/*": ["../../libs/shared/src/*"],
+      "@ftechnology/shared": ["../../libs/shared/src/index.ts"],
+      "@ftechnology/ui/*": ["../../libs/ui/src/*"],
+      "@ftechnology/ui": ["../../libs/ui/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "vite.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}
