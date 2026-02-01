@@ -5,7 +5,6 @@
 
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { join } from 'path';
@@ -46,12 +45,6 @@ import { HealthController } from './health.controller';
         limit: 100, // 100 requests per minute
       },
     ]),
-
-    // Serve uploaded files statically
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'uploads'),
-      serveRoot: '/uploads',
-    }),
 
     // Feature modules
     DatabaseModule,

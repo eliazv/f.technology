@@ -40,7 +40,7 @@ export function ForgotPasswordPage() {
       setIsSubmitted(true);
       toast.success('Email di reset inviata!');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Errore durante l\'invio dell\'email');
+      toast.error(error instanceof Error ? error.message : "Errore durante l'invio dell'email");
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +104,7 @@ export function ForgotPasswordPage() {
 
         {/* Back to login */}
         <Button variant="ghost" asChild className="w-full">
-          <Link to="/login">
+          <Link to="/login" className="flex items-center justify-center">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Torna al login
           </Link>
