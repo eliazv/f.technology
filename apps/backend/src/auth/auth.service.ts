@@ -14,6 +14,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { EmailService } from '../email/email.service';
 import { randomBytes } from 'crypto';
 
 /**
@@ -39,7 +40,8 @@ export class AuthService {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: Database,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly emailService: EmailService
   ) {}
 
   /**
@@ -69,6 +71,11 @@ export class AuthService {
         dateOfBirth: registerDto.dateOfBirth,
       })
       .returning();
+
+    // Send welcome email (non-blocking)
+    this.emailService
+      .sendWelcomeEmail(newUser.email, `${newUser.firstName} ${newUser.lastName}`)
+      .catch((error) => console.error('Failed to send welcome email:', error));
 
     return this.generateAuthResponse(newUser);
   }
@@ -231,10 +238,17 @@ export class AuthService {
       expiresAt,
     });
 
-    // TODO: Send email with reset link
-    // For now, we'll log the token (in production, send via email)
-    console.log(`Password reset token for ${user.email}: ${token}`);
-    console.log(`Reset link: http://localhost:4200/reset-password?token=${token}`);
+    // Send password reset email
+    try {
+      await this.emailService.sendPasswordResetEmail(
+        user.email,
+        token,
+        `${user.firstName} ${user.lastName}`
+      );
+    } catch (error) {
+      // Log error but don't reveal it to the user for security
+      console.error('Failed to send password reset email:', error);
+    }
 
     return { message: 'Se l\'email esiste, riceverai le istruzioni per il reset della password' };
   }

@@ -27,9 +27,10 @@ Un'applicazione web full-stack con sistema di autenticazione completo, costruita
 ### Autenticazione
 
 - ✅ Registrazione utente con validazione completa
+- ✅ **Email di benvenuto** automatica (con Resend)
 - ✅ Login con email e password
 - ✅ Funzionalità "Ricordami"
-- ✅ **Password dimenticata e reset** (con token sicuro)
+- ✅ **Password dimenticata e reset** (con token sicuro e invio email)
 - ✅ Autenticazione JWT con token sicuro
 - ✅ **Autenticazione social Google OAuth** (opzionale)
 - ✅ Protezione delle route private
@@ -98,6 +99,7 @@ Un'applicazione web full-stack con sistema di autenticazione completo, costruita
 | Passport JWT    | Autenticazione JWT         |
 | Passport Google | Autenticazione OAuth       |
 | @nestjs/throttler | Rate limiting            |
+| Resend          | Servizio invio email       |
 | bcryptjs        | Hashing password           |
 | class-validator | Validazione DTO            |
 | Multer          | Upload file                |
@@ -161,7 +163,30 @@ npm run db:seed
 
 Credenziali test: **test@example.com** / **Password123**
 
-### 5. Avvia l'applicazione
+### 5. Configura Email Service (Opzionale)
+
+Per abilitare l'invio email (reset password, email di benvenuto):
+
+1. **Crea account gratuito** su [Resend.com](https://resend.com)
+2. **Ottieni API key** da [resend.com/api-keys](https://resend.com/api-keys)
+3. **Aggiungi al file `.env`:**
+
+```env
+RESEND_API_KEY=re_your_api_key_here
+EMAIL_FROM=onboarding@resend.dev
+APP_NAME=FTechnology
+```
+
+**Nota:** Resend offre 100 email/giorno gratis, perfetto per sviluppo e piccoli progetti.
+
+**Alternative:**
+- **SendGrid** (100 email/giorno gratis)
+- **Mailgun** (5000 email/mese gratis primi 3 mesi)
+- **Mailtrap** (solo testing/sviluppo)
+
+Se non configurato, le email saranno solo loggiate in console (development mode).
+
+### 6. Avvia l'applicazione
 
 ```bash
 # Avvia frontend e backend contemporaneamente
@@ -485,6 +510,22 @@ Schema condivisi tra frontend e backend per:
 - Single source of truth per le regole di validazione
 - Type inference automatica
 - Validazione runtime sicura
+
+### Email Service con Resend
+
+Ho scelto **Resend** per l'invio email perché:
+
+- API moderna e developer-friendly
+- SDK TypeScript nativo
+- Template HTML personalizzabili
+- Piano gratuito generoso (100 email/giorno)
+- Deliverability eccellente
+- Non richiede configurazione SMTP complessa
+
+**Email implementate:**
+- Welcome email dopo registrazione (con design moderno)
+- Password reset con link sicuro (scadenza 1 ora)
+- Template responsive con gradient e dark mode support
 
 ### Componenti UI (shadcn-style)
 
