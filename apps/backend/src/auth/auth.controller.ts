@@ -37,8 +37,11 @@ export class AuthController {
   @Post("register")
   @HttpCode(HttpStatus.CREATED)
   @Throttle({ default: { limit: 3, ttl: 900000 } }) // 3 requests per 15 minutes
-  async register(@Body() registerDto: RegisterDto) {
-    const result = await this.authService.register(registerDto);
+  async register(@Body() registerDto: RegisterDto, @Req() req: Request) {
+    const ipAddress = req.ip || req.socket.remoteAddress || "unknown";
+    const userAgent = req.headers["user-agent"] || "unknown";
+
+    const result = await this.authService.register(registerDto, ipAddress, userAgent);
     return {
       success: true,
       message: "Registrazione completata con successo",

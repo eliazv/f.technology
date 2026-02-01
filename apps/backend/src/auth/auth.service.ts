@@ -47,7 +47,7 @@ export class AuthService {
   /**
    * Register a new user
    */
-  async register(registerDto: RegisterDto): Promise<AuthResponse> {
+  async register(registerDto: RegisterDto, ipAddress: string, userAgent: string): Promise<AuthResponse> {
     // Check if email already exists
     const existingUser = await this.db.query.users.findFirst({
       where: eq(users.email, registerDto.email.toLowerCase()),
@@ -71,6 +71,13 @@ export class AuthService {
         dateOfBirth: registerDto.dateOfBirth,
       })
       .returning();
+
+    // Record login history for registration
+    await this.db.insert(loginHistory).values({
+      userId: newUser.id,
+      ipAddress,
+      userAgent,
+    });
 
     // Send welcome email (non-blocking)
     this.emailService
