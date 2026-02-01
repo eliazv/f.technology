@@ -85,7 +85,7 @@ export function RegisterPage() {
     try {
       await registerUser(data);
       toast.success('Registrazione completata con successo!');
-      navigate('/dashboard');
+      navigate('/login');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Errore durante la registrazione');
     }

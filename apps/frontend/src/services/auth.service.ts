@@ -4,7 +4,14 @@
  */
 
 import api from "./api";
-import { LoginDto, RegisterDto, AuthResponse, User } from "@ftechnology/shared";
+import {
+  LoginDto,
+  RegisterDto,
+  AuthResponse,
+  User,
+  ForgotPasswordFormData,
+  ResetPasswordFormData
+} from "@ftechnology/shared";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -52,9 +59,27 @@ export async function logout(): Promise<void> {
   await api.post("/auth/logout");
 }
 
+/**
+ * Request password reset
+ */
+export async function forgotPassword(data: ForgotPasswordFormData): Promise<{ message: string }> {
+  const response = await api.post<ApiResponse<{ message: string }>>("/auth/forgot-password", data);
+  return { message: response.data.message || 'Email inviata con successo' };
+}
+
+/**
+ * Reset password with token
+ */
+export async function resetPassword(data: ResetPasswordFormData): Promise<{ message: string }> {
+  const response = await api.post<ApiResponse<{ message: string }>>("/auth/reset-password", data);
+  return { message: response.data.message || 'Password reimpostata con successo' };
+}
+
 export const authService = {
   register,
   login,
   getCurrentUser,
   logout,
+  forgotPassword,
+  resetPassword,
 };

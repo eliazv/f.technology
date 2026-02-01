@@ -15,16 +15,19 @@ export const users = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     email: varchar('email', { length: 255 }).notNull().unique(),
-    passwordHash: text('password_hash').notNull(),
+    passwordHash: text('password_hash'), // Nullable for OAuth users
     firstName: varchar('first_name', { length: 50 }).notNull(),
     lastName: varchar('last_name', { length: 50 }).notNull(),
-    dateOfBirth: date('date_of_birth').notNull(),
+    dateOfBirth: date('date_of_birth'), // Nullable for OAuth users
     avatarUrl: text('avatar_url'),
+    provider: varchar('provider', { length: 20 }).default('local'), // 'local', 'google', etc.
+    providerId: varchar('provider_id', { length: 255 }), // OAuth provider user ID
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => ({
     emailIdx: index('users_email_idx').on(table.email),
+    providerIdx: index('users_provider_idx').on(table.provider, table.providerId),
   })
 );
 

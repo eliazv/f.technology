@@ -7,6 +7,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageLoader } from '@/components/ui/Spinner';
 import { LoginPage, RegisterPage, DashboardPage, ForgotPasswordPage } from '@/pages';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 
 /**
  * Protected Route Component
@@ -72,6 +73,14 @@ export function AppRoutes() {
         element={
           <PublicRoute>
             <ForgotPasswordPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <PublicRoute>
+            <ResetPasswordPage />
           </PublicRoute>
         }
       />

@@ -1,6 +1,6 @@
 /**
  * Forgot Password Page
- * UI for password reset request (not fully implemented)
+ * Handles password reset request
  */
 
 import { useState } from 'react';
@@ -9,6 +9,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { forgotPasswordSchema, ForgotPasswordFormData } from '@ftechnology/shared';
+import { authService } from '@/services/auth.service';
+import { useToast } from '@/components/ui/Toast';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -17,6 +19,7 @@ import { Label } from '@/components/ui/Label';
 export function ForgotPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const {
     register,
@@ -32,10 +35,15 @@ export function ForgotPasswordPage() {
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    setIsSubmitted(true);
+    try {
+      await authService.forgotPassword(data);
+      setIsSubmitted(true);
+      toast.success('Email di reset inviata!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Errore durante l\'invio dell\'email');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted) {

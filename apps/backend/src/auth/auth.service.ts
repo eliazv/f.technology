@@ -6,12 +6,15 @@
 import { Injectable, UnauthorizedException, ConflictException, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 import { DATABASE_CONNECTION, Database } from '../database/database.module';
-import { users, loginHistory } from '../database/schema';
+import { users, loginHistory, passwordResetTokens } from '../database/schema';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { randomBytes } from 'crypto';
 
 /**
  * Authentication response structure
@@ -127,6 +130,162 @@ export class AuthService {
   }
 
   /**
+   * Find or create OAuth user
+   */
+  async findOrCreateOAuthUser(oauthData: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
+    provider: string;
+    providerId: string;
+  }) {
+    // Try to find existing user by provider and providerId
+    let user = await this.db.query.users.findFirst({
+      where: and(
+        eq(users.provider, oauthData.provider),
+        eq(users.providerId, oauthData.providerId)
+      ),
+    });
+
+    if (user) {
+      // Update avatar if changed
+      if (oauthData.avatarUrl && user.avatarUrl !== oauthData.avatarUrl) {
+        await this.db
+          .update(users)
+          .set({ avatarUrl: oauthData.avatarUrl, updatedAt: new Date() })
+          .where(eq(users.id, user.id));
+        user.avatarUrl = oauthData.avatarUrl;
+      }
+      return user;
+    }
+
+    // Try to find by email (user might have registered with email/password)
+    user = await this.db.query.users.findFirst({
+      where: eq(users.email, oauthData.email.toLowerCase()),
+    });
+
+    if (user) {
+      // Link OAuth provider to existing account
+      await this.db
+        .update(users)
+        .set({
+          provider: oauthData.provider,
+          providerId: oauthData.providerId,
+          avatarUrl: oauthData.avatarUrl || user.avatarUrl,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, user.id));
+
+      return {
+        ...user,
+        provider: oauthData.provider,
+        providerId: oauthData.providerId,
+        avatarUrl: oauthData.avatarUrl || user.avatarUrl,
+      };
+    }
+
+    // Create new user
+    const [newUser] = await this.db
+      .insert(users)
+      .values({
+        email: oauthData.email.toLowerCase(),
+        firstName: oauthData.firstName,
+        lastName: oauthData.lastName,
+        avatarUrl: oauthData.avatarUrl,
+        provider: oauthData.provider,
+        providerId: oauthData.providerId,
+        passwordHash: null, // OAuth users don't have passwords
+        dateOfBirth: null, // Will be set later if needed
+      })
+      .returning();
+
+    return newUser;
+  }
+
+  /**
+   * Request password reset
+   */
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.email, forgotPasswordDto.email.toLowerCase()),
+    });
+
+    // Don't reveal if email exists for security
+    if (!user) {
+      return { message: 'Se l\'email esiste, riceverai le istruzioni per il reset della password' };
+    }
+
+    // Generate secure random token
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // Token expires in 1 hour
+
+    // Invalidate any existing tokens for this user
+    await this.db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, user.id));
+
+    // Create new reset token
+    await this.db.insert(passwordResetTokens).values({
+      userId: user.id,
+      token,
+      expiresAt,
+    });
+
+    // TODO: Send email with reset link
+    // For now, we'll log the token (in production, send via email)
+    console.log(`Password reset token for ${user.email}: ${token}`);
+    console.log(`Reset link: http://localhost:4200/reset-password?token=${token}`);
+
+    return { message: 'Se l\'email esiste, riceverai le istruzioni per il reset della password' };
+  }
+
+  /**
+   * Reset password using token
+   */
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+    const { token, password, confirmPassword } = resetPasswordDto;
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      throw new UnauthorizedException('Le password non corrispondono');
+    }
+
+    // Find valid token
+    const resetToken = await this.db.query.passwordResetTokens.findFirst({
+      where: eq(passwordResetTokens.token, token),
+    });
+
+    if (!resetToken) {
+      throw new UnauthorizedException('Token non valido o scaduto');
+    }
+
+    // Check if token is expired
+    if (new Date() > resetToken.expiresAt) {
+      throw new UnauthorizedException('Token scaduto');
+    }
+
+    // Check if token was already used
+    if (resetToken.usedAt) {
+      throw new UnauthorizedException('Token già utilizzato');
+    }
+
+    // Update password
+    const passwordHash = await bcrypt.hash(password, 12);
+    await this.db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(users.id, resetToken.userId));
+
+    // Mark token as used
+    await this.db
+      .update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetTokens.id, resetToken.id));
+
+    return { message: 'Password reimpostata con successo' };
+  }
+
+  /**
    * Generate authentication response with JWT token
    */
   private generateAuthResponse(
@@ -148,7 +307,7 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        dateOfBirth: user.dateOfBirth,
+        dateOfBirth: user.dateOfBirth || '',
         avatarUrl: user.avatarUrl,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),

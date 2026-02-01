@@ -29,9 +29,12 @@ Un'applicazione web full-stack con sistema di autenticazione completo, costruita
 - ✅ Registrazione utente con validazione completa
 - ✅ Login con email e password
 - ✅ Funzionalità "Ricordami"
+- ✅ **Password dimenticata e reset** (con token sicuro)
 - ✅ Autenticazione JWT con token sicuro
+- ✅ **Autenticazione social Google OAuth** (opzionale)
 - ✅ Protezione delle route private
 - ✅ Logout sicuro
+- ✅ **Rate limiting** su endpoint critici
 
 ### Gestione Profilo
 
@@ -56,6 +59,15 @@ Un'applicazione web full-stack con sistema di autenticazione completo, costruita
 - ✅ Validazione lato client e server
 - ✅ Protezione CORS
 - ✅ Sanitizzazione input
+- ✅ **Rate limiting anti-brute-force** (5 login/5min, 3 registrazioni/15min)
+- ✅ **Token di reset password** con scadenza (1 ora)
+
+### Testing
+
+- ✅ **Test unitari** per componenti principali (Login, Register, Dashboard)
+- ✅ Test per componenti UI (Button, Input)
+- ✅ Test per AuthContext
+- ✅ Configurazione Jest e Testing Library
 
 ## 🛠 Tecnologie Utilizzate
 
@@ -83,10 +95,12 @@ Un'applicazione web full-stack con sistema di autenticazione completo, costruita
 | TypeScript      | Tipizzazione statica |
 | Drizzle ORM     | Database ORM         |
 | PostgreSQL      | Database             |
-| Passport JWT    | Autenticazione       |
-| bcryptjs        | Hashing password     |
-| class-validator | Validazione DTO      |
-| Multer          | Upload file          |
+| Passport JWT    | Autenticazione JWT         |
+| Passport Google | Autenticazione OAuth       |
+| @nestjs/throttler | Rate limiting            |
+| bcryptjs        | Hashing password           |
+| class-validator | Validazione DTO            |
+| Multer          | Upload file                |
 
 ### Infrastruttura
 
@@ -322,6 +336,64 @@ Authorization: Bearer <token>
 
 Effettua il logout (richiede autenticazione).
 
+#### POST /api/auth/forgot-password
+
+Richiede reset password.
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "message": "Se l'email esiste, riceverai le istruzioni per il reset della password"
+}
+```
+
+**Rate Limit:** 3 richieste per 15 minuti
+
+#### POST /api/auth/reset-password
+
+Reimposta la password con token.
+
+**Request Body:**
+
+```json
+{
+  "token": "reset-token-from-email",
+  "password": "NewPassword123",
+  "confirmPassword": "NewPassword123"
+}
+```
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "message": "Password reimpostata con successo"
+}
+```
+
+**Rate Limit:** 3 richieste per 15 minuti
+
+#### GET /api/auth/google
+
+Avvia il flusso di autenticazione Google OAuth.
+
+#### GET /api/auth/google/callback
+
+Callback per Google OAuth (gestito automaticamente).
+
+**Nota:** Richiede configurazione di `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` nel file `.env`
+
 ### Utenti
 
 #### GET /api/users/me
@@ -431,7 +503,44 @@ Uso di **React Context** per:
 - Performance adeguata per auth state
 - Evitare dipendenze esterne (Redux, Zustand)
 
+### Rate Limiting
+
+Implementato con **@nestjs/throttler** per:
+
+- Prevenire attacchi brute-force
+- Limitare tentativi di login (5/5min)
+- Limitare registrazioni (3/15min)
+- Proteggere endpoint di password reset
+
+### Password Recovery
+
+Sistema completo di reset password:
+
+- Token sicuri con scadenza (1 ora)
+- Invalidazione automatica dopo l'uso
+- Non rivela esistenza email (security best practice)
+- Logging del token per sviluppo (in produzione: invio email)
+
+### OAuth Social
+
+Supporto per Google OAuth 2.0:
+
+- Strategia Passport Google
+- Creazione automatica account o linking
+- Gestione avatar da profilo Google
+- Schema database flessibile (provider/providerId)
+
 ## 🧪 Testing
+
+Il progetto include test unitari completi per i componenti principali:
+
+**Test implementati:**
+- ✅ `AuthContext.test.tsx` - Test context autenticazione
+- ✅ `LoginPage.test.tsx` - Test pagina login
+- ✅ `RegisterPage.test.tsx` - Test pagina registrazione
+- ✅ `DashboardPage.test.tsx` - Test dashboard
+- ✅ `Button.test.tsx` - Test componente Button
+- ✅ `Input.test.tsx` - Test componente Input
 
 ### Esegui tutti i test
 
