@@ -14,7 +14,6 @@ import {
   Edit2,
   Save,
   X,
-  Upload,
   Clock,
   Monitor,
   MapPin,
