@@ -4,6 +4,7 @@
  */
 
 import { Module, Global } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema';
@@ -15,26 +16,34 @@ export const DATABASE_CONNECTION = 'DATABASE_CONNECTION';
   providers: [
     {
       provide: DATABASE_CONNECTION,
-      useFactory: async () => {
-        const pool = new Pool({
-          host: 'localhost',
-          port: 5432,
-          user: 'postgres',
-          password: 'postgres',
-          database: 'ftechnology',
-        });
+      useFactory: async (configService: ConfigService) => {
+        const connectionString = configService.get<string>('DATABASE_URL');
+
+        let pool: Pool;
+
+        if (connectionString) {
+          pool = new Pool({ connectionString });
+        } else {
+          pool = new Pool({
+            host: configService.get<string>('DATABASE_HOST', 'localhost'),
+            port: parseInt(configService.get<string>('DATABASE_PORT', '5433'), 10),
+            user: configService.get<string>('DATABASE_USER', 'postgres'),
+            password: configService.get<string>('DATABASE_PASSWORD', 'postgres'),
+            database: configService.get<string>('DATABASE_NAME', 'ftechnology'),
+          });
+        }
 
         // Test connection
         try {
           await pool.query('SELECT 1');
-          console.log('✅ Database PostgreSQL connected successfully');
         } catch (error) {
-          console.error('❌ Database connection failed:', error);
+          console.error('Database connection failed:', error);
           throw error;
         }
 
         return drizzle(pool, { schema });
       },
+      inject: [ConfigService],
     },
   ],
   exports: [DATABASE_CONNECTION],

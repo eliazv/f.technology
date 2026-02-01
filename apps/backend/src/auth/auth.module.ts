@@ -16,6 +16,10 @@ import { GoogleStrategy } from "./strategies/google.strategy";
 import { UsersModule } from "../users/users.module";
 import { EmailModule } from "../email/email.module";
 
+const googleProvider = process.env.GOOGLE_CLIENT_ID
+  ? [GoogleStrategy]
+  : [];
+
 @Module({
   imports: [
     UsersModule,
@@ -36,7 +40,7 @@ import { EmailModule } from "../email/email.module";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, GoogleStrategy],
+  providers: [AuthService, JwtStrategy, LocalStrategy, ...googleProvider],
   exports: [AuthService],
 })
 export class AuthModule {}

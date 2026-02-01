@@ -112,6 +112,10 @@ export class AuthService {
       throw new UnauthorizedException('Credenziali non valide');
     }
 
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Questo account usa autenticazione OAuth');
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
@@ -220,7 +224,7 @@ export class AuthService {
 
     // Don't reveal if email exists for security
     if (!user) {
-      return { message: 'Se l\'email esiste, riceverai le istruzioni per il reset della password' };
+      return { message: "Se l'email esiste, riceverai le istruzioni per il reset della password" };
     }
 
     // Generate secure random token
@@ -250,7 +254,7 @@ export class AuthService {
       console.error('Failed to send password reset email:', error);
     }
 
-    return { message: 'Se l\'email esiste, riceverai le istruzioni per il reset della password' };
+    return { message: "Se l'email esiste, riceverai le istruzioni per il reset della password" };
   }
 
   /**

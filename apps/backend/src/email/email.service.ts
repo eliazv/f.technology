@@ -10,18 +10,20 @@ import { Resend } from 'resend';
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private readonly resend: Resend;
+  private readonly resend: Resend | null;
   private readonly fromEmail: string;
   private readonly appName: string;
 
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
 
-    if (!apiKey) {
+    if (!apiKey || apiKey === 're_your_api_key_here') {
       this.logger.warn('RESEND_API_KEY not configured - email sending will be disabled');
+      this.resend = null;
+    } else {
+      this.resend = new Resend(apiKey);
     }
 
-    this.resend = new Resend(apiKey);
     this.fromEmail = this.configService.get<string>('EMAIL_FROM', 'onboarding@resend.dev');
     this.appName = this.configService.get<string>('APP_NAME', 'FTechnology');
   }
@@ -33,6 +35,13 @@ export class EmailService {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
+    if (!this.resend) {
+      this.logger.log(
+        `[DEV] Email service disabled. Password reset link for ${email}: ${resetLink}`
+      );
+      return;
+    }
+
     try {
       const { data, error } = await this.resend.emails.send({
         from: `${this.appName} <${this.fromEmail}>`,
@@ -43,7 +52,7 @@ export class EmailService {
 
       if (error) {
         this.logger.error(`Failed to send password reset email to ${email}:`, error);
-        throw new Error('Impossibile inviare l\'email di reset password');
+        throw new Error("Impossibile inviare l'email di reset password");
       }
 
       this.logger.log(`Password reset email sent to ${email} (ID: ${data?.id})`);
@@ -62,6 +71,11 @@ export class EmailService {
    */
   async sendWelcomeEmail(email: string, userName: string): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
+
+    if (!this.resend) {
+      this.logger.log(`[DEV] Email service disabled. Welcome email would be sent to ${email}`);
+      return;
+    }
 
     try {
       const { data, error } = await this.resend.emails.send({

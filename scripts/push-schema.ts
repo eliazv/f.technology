@@ -14,10 +14,10 @@ async function pushSchema() {
 
   const pool = new Pool({
     host: 'localhost',
-    port: 5432,
+    port: 5433,
     user: 'postgres',
+    password: 'postgres',
     database: 'ftechnology',
-    // No password - using TRUST auth in development
   });
 
   const db = drizzle(pool, { schema });
@@ -34,11 +34,13 @@ async function pushSchema() {
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         email VARCHAR(255) NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL,
+        password_hash TEXT,
         first_name VARCHAR(50) NOT NULL,
         last_name VARCHAR(50) NOT NULL,
-        date_of_birth DATE NOT NULL,
+        date_of_birth DATE,
         avatar_url TEXT,
+        provider VARCHAR(20) DEFAULT 'local',
+        provider_id VARCHAR(255),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
       );
